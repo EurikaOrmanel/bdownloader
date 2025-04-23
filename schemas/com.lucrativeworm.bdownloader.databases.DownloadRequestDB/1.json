@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "43c3f243b83b48cdb32d64b4034b5303",
+    "identityHash": "2172a34157c4d4a50ab69f3b7a45b74f",
     "entities": [
       {
         "tableName": "DownloadRequest",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `filePath` TEXT NOT NULL, `url` TEXT NOT NULL, `totalBytes` INTEGER NOT NULL, `downloadedBytes` INTEGER NOT NULL, `status` TEXT NOT NULL, `updatedAt` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `filePath` TEXT NOT NULL, `url` TEXT NOT NULL, `totalBytes` INTEGER NOT NULL, `downloadedBytes` INTEGER, `status` TEXT NOT NULL, `updatedAt` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -34,8 +34,7 @@
           {
             "fieldPath": "downloadedBytes",
             "columnName": "downloadedBytes",
-            "affinity": "INTEGER",
-            "notNull": true
+            "affinity": "INTEGER"
           },
           {
             "fieldPath": "status",
@@ -60,7 +59,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '43c3f243b83b48cdb32d64b4034b5303')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '2172a34157c4d4a50ab69f3b7a45b74f')"
     ]
   }
 }

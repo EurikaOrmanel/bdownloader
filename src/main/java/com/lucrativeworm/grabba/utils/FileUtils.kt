@@ -5,10 +5,6 @@ import java.io.File
 import java.io.IOException
 
 object FileUtils {
-//
-//    private fun getPath( filePath: String): String {
-//        return dirPath + File.separator + fileName
-//    }
 
     fun getTempPath(filePath: String): String {
         return "$filePath.temp"
@@ -32,12 +28,6 @@ object FileUtils {
                 oldFile.delete()
             }
         }
-    }
-
-    fun deleteFile(req: DownloadRequest) {
-        val path = getTempPath(req.filePath)
-        val file = File(path)
-        file.delete()
     }
 
 

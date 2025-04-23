@@ -2,6 +2,7 @@ package com.lucrativeworm.bdownloader.internal
 
 import com.lucrativeworm.bdownloader.daos.DownloadRequestDao
 import com.lucrativeworm.bdownloader.internal.stream.FileDownloadRandomAccessFile
+import com.lucrativeworm.bdownloader.models.DownloadRequest
 import com.lucrativeworm.bdownloader.models.Status
 import com.lucrativeworm.bdownloader.utils.FileUtils
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -16,27 +17,43 @@ import java.io.File
 import java.io.IOException
 
 class DownloadTaskQueue(private val downloadRequestDao: DownloadRequestDao) {
-    fun init() {
-        dbScope.launch {
-            //TODO: load all existing tasks from database insto list.
-        }
-    }
 
     private val dbScope =
         CoroutineScope(SupervisorJob() + Dispatchers.IO + CoroutineExceptionHandler { _, throwable ->
             println(throwable.stackTrace)
+            println(throwable.message)
         })
-    private val idReqTask = mutableMapOf<Int, DownloadTask>()
+    private val idReqTask = mutableMapOf<Long, DownloadTask>()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main +
             CoroutineExceptionHandler { _, throwable ->
                 println(throwable.stackTrace)
+                println(throwable.message)
             })
 
-    fun status(id: Int): Status {
+    fun status(id: Long): Status {
         return idReqTask[id]?.downloadRequest?.status ?: Status.UNKNOWN
     }
 
-    fun getTasks(): List<DownloadTask> {
+    fun fetchbyIds(ids: List<Long>): List<DownloadRequest> {
+        val downloadTasks = downloadRequestDao.getByIds(ids)
+        val dlTasks = mutableListOf<DownloadTask>()
+        for ((i, value) in downloadTasks.withIndex()) {
+            val foundTask = idReqTask[value.id]
+            if (foundTask != null) {
+                dlTasks.add(foundTask)
+            } else {
+                val dlTask = DownloadTask(value, downloadRequestDao)
+                dlTask.load()
+                dlTasks.add(dlTask)
+            }
+
+        }
+        //TOOD:change the status for a task that's not available in the req to either unknown or not ongoing
+        return downloadTasks
+
+    }
+
+    fun getOngoingTasks(): List<DownloadTask> {
         return idReqTask.values.toList()
     }
 
@@ -46,7 +63,7 @@ class DownloadTaskQueue(private val downloadRequestDao: DownloadRequestDao) {
         }
     }
 
-    suspend fun addToQueue(task: DownloadTask, listener: DownloadTask.Listener): Int? {
+    suspend fun addToQueue(task: DownloadTask, listener: DownloadTask.Listener): Long? {
         val downloadRequest = task.downloadRequest
         val toDB = dbScope.async {
             val existingDownloadTask = downloadRequestDao.byFileName(downloadRequest.url)
@@ -54,9 +71,10 @@ class DownloadTaskQueue(private val downloadRequestDao: DownloadRequestDao) {
                 listener.onError("Download already exists")
                 return@async null
             }
-            downloadRequestDao.insert(task.downloadRequest)
-            val foundReq = downloadRequestDao.byUrl(downloadRequest.url)
-            foundReq?.id
+
+            val id = downloadRequestDao.insert(task.downloadRequest)
+            println("foundReq: $id")
+            return@async id
         }
 
         val id = toDB.await() ?: return null
@@ -73,17 +91,21 @@ class DownloadTaskQueue(private val downloadRequestDao: DownloadRequestDao) {
 
     fun cancelAll() {
         scope.cancel()
+        idReqTask.values.forEach { eachTask ->
+            eachTask.cancel()
+        }
         idReqTask.clear()
         dbScope.launch {
             downloadRequestDao.deleteAll()
         }
     }
 
-    fun cancel(id: Int) {
+    fun cancel(id: Long) {
         val found = idReqTask[id]
         val status = found?.downloadRequest?.status ?: return
         if (status != Status.CANCELLED) {
-            found.job.cancel()
+            found.cancel()
+
             dbScope.launch {
                 downloadRequestDao.deleteById(id)
             }
@@ -93,41 +115,4 @@ class DownloadTaskQueue(private val downloadRequestDao: DownloadRequestDao) {
     }
 
 
-    private suspend fun sync(outputStream: FileDownloadRandomAccessFile) {
-        var success: Boolean
-        try {
-            outputStream.flushAndSync()
-            success = true
-        } catch (e: IOException) {
-            success = false
-            e.printStackTrace()
-        }
-//        if (success && isResumeSupported) {
-//            dbHelper
-//                .updateProgress(
-//                    req.downloadId,
-//                    req.downloadedBytes,
-//                    System.currentTimeMillis()
-//                )
-//        }
-    }
-
-    fun clearTempFile(task: DownloadTask) {
-        val tempPath = FileUtils.getTempPath(task.downloadRequest.filePath)
-        val file = File(tempPath)
-        if (file.exists()) {
-            file.delete()
-        }
-        task.reset()
-    }
-
-    private fun executeOnMainThread(block: () -> Unit) {
-        scope.launch {
-            block()
-        }
-    }
-
-    private fun downloadFile(task: DownloadTask) {
-
-    }
 }
