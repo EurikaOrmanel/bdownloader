@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     id("com.google.devtools.ksp")
+    id("maven-publish")
 }
 
 android {
@@ -37,6 +38,18 @@ android {
     }
     kotlinOptions {
         jvmTarget = "11"
+    }
+}
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("release") {
+                from(components["release"])
+                groupId = "com.lucrativeworm"
+                artifactId = "bdownloader"
+                version = "0.0.1-beta"
+            }
+        }
     }
 }
 

@@ -169,7 +169,8 @@ class DownloadTask(
     ) =
         suspendCancellableCoroutine { cont ->
             val existingSize = chunkFile.length()
-            downloadRequest.downloadedBytes = existingSize
+            downloadRequest.downloadedBytes = downloadRequest.downloadedBytes?.plus(existingSize)
+            println("Initial size before I start: ${existingSize}. and the downloadRequest is: ${downloadRequest.downloadedBytes}")
             val actualStart = start + existingSize
             val rangeHeader =
                 if (end != null) "bytes=$actualStart-$end" else "bytes=$actualStart-"
@@ -206,10 +207,8 @@ class DownloadTask(
                                     return
                                 }
                                 sink.outputStream().write(buffer, 0, bytesRead)
-
                                 downloadRequest.downloadedBytes =
                                     downloadRequest.downloadedBytes?.plus(bytesRead.toLong())
-
 
                                 listener.onProgress(
                                     ((downloadRequest.downloadedBytes!!.toDouble() / downloadRequest.totalBytes) * 100).toInt()
@@ -218,7 +217,6 @@ class DownloadTask(
                             sink.flush()
                         }
                     }
-
                     cont.resumeWith(Result.success(Unit))
                 }
             })
