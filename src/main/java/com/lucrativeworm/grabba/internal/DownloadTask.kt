@@ -94,6 +94,7 @@ class DownloadTask(
         dbScope.launch {
             downloadRequestDao.update(downloadRequest)
         }
+        listener.onStart()
         if (totalContentLength > 0L) {
             chunkDownload(totalContentLength)
         } else {
@@ -105,7 +106,6 @@ class DownloadTask(
     }
 
     private suspend fun chunkDownload(fileSize: Long) = coroutineScope {
-        listener.onStart()
         downloadRequest.status = Status.RUNNING
 
         val downloadJobs = mutableListOf<Deferred<Unit>>()
@@ -169,6 +169,7 @@ class DownloadTask(
     ) =
         suspendCancellableCoroutine { cont ->
             val existingSize = chunkFile.length()
+            downloadRequest.downloadedBytes = existingSize
             val actualStart = start + existingSize
             val rangeHeader =
                 if (end != null) "bytes=$actualStart-$end" else "bytes=$actualStart-"
@@ -226,12 +227,9 @@ class DownloadTask(
     private fun deleteTempFile(tempFile: File): Boolean =
         tempFile.takeIf { it.exists() }?.delete() ?: false
 
-    fun reset() {
-        downloadRequest.reset()
-    }
-
     fun pause() {
         downloadRequest.status = Status.PAUSED
+        job.cancel()
         dbScope.launch {
             downloadRequestDao.update(downloadRequest)
         }

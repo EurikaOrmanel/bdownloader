@@ -66,11 +66,16 @@ class DownloadTaskQueue(private val downloadRequestDao: DownloadRequestDao) {
 
     suspend fun addToQueue(req: DownloadRequest, listener: DownloadTask.Listener): Long? {
         val task = DownloadTask(req, downloadRequestDao)
+        val inQueue =
+            idReqTask.values.filter { current -> current.downloadRequest.filePath == req.filePath }
+        if (inQueue.isNotEmpty()) {
+            listener.onError("Already enqueued")
+            return null
+        }
         val toDB = dbScope.async {
-            val existingDownloadTask = downloadRequestDao.byFileName(req.url)
+            val existingDownloadTask = downloadRequestDao.byFileName(req.filePath)
             if (existingDownloadTask != null) {
-                listener.onError("Download already exists")
-                return@async null
+                return@async existingDownloadTask.id
             }
 
             val id = downloadRequestDao.insert(req)
@@ -91,7 +96,10 @@ class DownloadTaskQueue(private val downloadRequestDao: DownloadRequestDao) {
     }
 
     fun pause(id: Long) {
+
         idReqTask[id]?.pause()
+        idReqTask.remove(id)
+
     }
 
     fun cancelAll() {
@@ -117,6 +125,15 @@ class DownloadTaskQueue(private val downloadRequestDao: DownloadRequestDao) {
             idReqTask.remove(id)
         }
 
+    }
+
+    fun resume(id: Long, listener: DownloadTask.Listener) {
+        val req = idReqTask[id]?.downloadRequest ?: downloadRequestDao.byId(id) ?: return
+        req.status = Status.QUEUED
+        CoroutineScope(Dispatchers.IO).launch {
+            addToQueue(req, listener)
+
+        }
     }
 
 

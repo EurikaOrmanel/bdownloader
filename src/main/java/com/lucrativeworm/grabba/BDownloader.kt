@@ -17,14 +17,20 @@ class AllDownloaderManager(context: Context) {
         .allowMainThreadQueries().build()
     private val downloadTaskQueue = DownloadTaskQueue(db.downloadReqDao())
 
-    suspend fun enqueue(req: DownloadRequest, listener: DownloadTask.Listener) {
+    suspend fun enqueue(req: DownloadRequest, listener: DownloadTask.Listener) =
         downloadTaskQueue.addToQueue(req, listener)
-    }
 
     fun pause(id: Long) {
         downloadTaskQueue.pause(id)
     }
-    fun byId(id:Long){
+
+    fun resume(id: Long, listener: DownloadTask.Listener) {
+        downloadTaskQueue.resume(id, listener)
+
+
+    }
+
+    fun byId(id: Long) {
         downloadTaskQueue.requestById(id)
     }
 
