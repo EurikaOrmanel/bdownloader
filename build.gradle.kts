@@ -47,7 +47,7 @@ afterEvaluate {
                 from(components["release"])
                 groupId = "com.github.EurikaOrmanel"
                 artifactId = "bdownloader"
-                version = "0.0.1"
+                version = "0.0.2"
             }
         }
     }
