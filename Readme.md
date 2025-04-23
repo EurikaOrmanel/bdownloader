@@ -5,6 +5,7 @@
 
 # **bdownloader** is a multi-connection file downloading library with a pause,stop and resume feature.
 
+
 ### Features
 
 * Multi-threaded Downloads: Splits files into chunks and downloads them concurrently for maximum speed.
@@ -84,7 +85,7 @@ val  status = bdownloader.getStatus(downloadId);
 ```
 
 
-##TODO:
+## TODO:
 - [x] Add file to db in room
 - [x] Pause and resume download
 - [x] Check if item already in queue and flag when attempting a resume
