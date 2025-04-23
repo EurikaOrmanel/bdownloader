@@ -45,9 +45,9 @@ afterEvaluate {
         publications {
             create<MavenPublication>("release") {
                 from(components["release"])
-                groupId = "com.lucrativeworm"
+                groupId = "com.github.lucrativeworm"
                 artifactId = "bdownloader"
-                version = "0.0.1-beta"
+                version = "0.0.1"
             }
         }
     }
