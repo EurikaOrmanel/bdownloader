@@ -1,4 +1,7 @@
 ##bdownloader
+<p align="center">
+<img src="https://github.com/EurikaOrmanel/bdownloader/blob/main/assets/icon.jpg">
+</p>
 
 # **bdownloader** is a multi-connection file downloading library with a pause,stop and resume feature.
 
@@ -55,8 +58,6 @@ Then initialize it by passing context to the class's constructor:
 
 ```
 
-```
-
 ### Pause a download request
 ```kotlin
 bdownloader.pause(downloadId);
@@ -72,21 +73,16 @@ bdownloader.resume(downloadId);
 // Cancel with the download id
 bdownloader.cancel(downloadId);
 // The tag can be set to any request and then can be used to cancel the request
-bdownloader.cancel(TAG);
+bdownloader.cancel(downloadId);
 // Cancel all the requests
 bdownloader.cancelAll();
 ```
 
 ### Status of a download request
 ```kotlin
-Status status = BDownloader.getStatus(downloadId);
+val  status = bdownloader.getStatus(downloadId);
 ```
 
-### Clean up resumed files if database enabled
-```kotlin
-// Method to clean up all downloads 
-bdownloader.cleanUp(days);
-```
 
 ##TODO:
 - [x] Add file to db in room
