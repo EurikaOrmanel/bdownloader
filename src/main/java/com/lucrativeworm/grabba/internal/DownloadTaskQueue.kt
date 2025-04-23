@@ -1,10 +1,8 @@
 package com.lucrativeworm.bdownloader.internal
 
 import com.lucrativeworm.bdownloader.daos.DownloadRequestDao
-import com.lucrativeworm.bdownloader.internal.stream.FileDownloadRandomAccessFile
 import com.lucrativeworm.bdownloader.models.DownloadRequest
 import com.lucrativeworm.bdownloader.models.Status
-import com.lucrativeworm.bdownloader.utils.FileUtils
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -13,8 +11,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
-import java.io.IOException
 
 class DownloadTaskQueue(private val downloadRequestDao: DownloadRequestDao) {
 
@@ -34,7 +30,12 @@ class DownloadTaskQueue(private val downloadRequestDao: DownloadRequestDao) {
         return idReqTask[id]?.downloadRequest?.status ?: Status.UNKNOWN
     }
 
-    fun fetchbyIds(ids: List<Long>): List<DownloadRequest> {
+    fun requestById(id: Long): DownloadRequest? {
+        val task = idReqTask[id]
+        return task?.downloadRequest ?: downloadRequestDao.byId(id)
+    }
+
+    fun fetchByIds(ids: List<Long>): List<DownloadRequest> {
         val downloadTasks = downloadRequestDao.getByIds(ids)
         val dlTasks = mutableListOf<DownloadTask>()
         for ((i, value) in downloadTasks.withIndex()) {
@@ -63,16 +64,16 @@ class DownloadTaskQueue(private val downloadRequestDao: DownloadRequestDao) {
         }
     }
 
-    suspend fun addToQueue(task: DownloadTask, listener: DownloadTask.Listener): Long? {
-        val downloadRequest = task.downloadRequest
+    suspend fun addToQueue(req: DownloadRequest, listener: DownloadTask.Listener): Long? {
+        val task = DownloadTask(req, downloadRequestDao)
         val toDB = dbScope.async {
-            val existingDownloadTask = downloadRequestDao.byFileName(downloadRequest.url)
+            val existingDownloadTask = downloadRequestDao.byFileName(req.url)
             if (existingDownloadTask != null) {
                 listener.onError("Download already exists")
                 return@async null
             }
 
-            val id = downloadRequestDao.insert(task.downloadRequest)
+            val id = downloadRequestDao.insert(req)
             println("foundReq: $id")
             return@async id
         }
@@ -87,6 +88,10 @@ class DownloadTaskQueue(private val downloadRequestDao: DownloadRequestDao) {
         task.job = job
         idReqTask[id] = task
         return id
+    }
+
+    fun pause(id: Long) {
+        idReqTask[id]?.pause()
     }
 
     fun cancelAll() {

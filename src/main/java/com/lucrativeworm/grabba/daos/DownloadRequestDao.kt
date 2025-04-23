@@ -13,7 +13,7 @@ interface DownloadRequestDao {
     fun getAll(): List<DownloadRequest>
 
     @Query("SELECT * FROM downloadrequest WHERE id= :id ")
-    fun byId(id: Long): DownloadRequest
+    fun byId(id: Long): DownloadRequest?
 
     @Delete
     fun delete(downloadRequest: DownloadRequest)

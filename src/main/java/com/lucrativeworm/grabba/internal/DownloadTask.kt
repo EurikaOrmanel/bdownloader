@@ -54,6 +54,12 @@ class DownloadTask(
     }
 
     fun cancel() {
+        downloadRequest.id?.let { id ->
+            dbScope.launch {
+                downloadRequestDao.deleteById(id)
+            }
+        }
+
         job.cancel()
         if (file.exists()) {
             deleteTempFile(file)
@@ -98,23 +104,6 @@ class DownloadTask(
         tempFile.renameTo(file)
     }
 
-//    fun downloadProgress(): Int? {
-//        val progress = null
-//        if (tempFile.exists()) {
-//            return (tempFile.length() / downloadRequest.totalBytes) * 100
-//        }
-//
-//        chunkTempFiles.forEach { each ->
-//            if (each.exists()) {
-//                progress += (each.length()) * (100 / genConnectionCount(downloadRequest.totalBytes))
-//
-//            }
-//
-//        }
-//        return null
-//
-//    }
-
     private suspend fun chunkDownload(fileSize: Long) = coroutineScope {
         listener.onStart()
         downloadRequest.status = Status.RUNNING
@@ -152,7 +141,6 @@ class DownloadTask(
             }
 
         } catch (e: Exception) {
-            println(e)
             listener.onError("Failed to compile downloaded files into one.")
         }
     }
@@ -195,11 +183,6 @@ class DownloadTask(
 
                 override fun onResponse(call: Call, response: Response) {
                     if (!response.isSuccessful || response.body == null) {
-                        val range = request.headers("Range")
-                        println("current byte range: $range totalBytes= ")
-                        println(
-                            response.body?.string()
-                        )
                         cont.resumeWith(Result.failure(IOException("Could not get data from url")))
                         return
                     }
@@ -221,8 +204,15 @@ class DownloadTask(
                                     sink.flush()
                                     return
                                 }
-
                                 sink.outputStream().write(buffer, 0, bytesRead)
+
+                                downloadRequest.downloadedBytes =
+                                    downloadRequest.downloadedBytes?.plus(bytesRead.toLong())
+
+
+                                listener.onProgress(
+                                    ((downloadRequest.downloadedBytes!!.toDouble() / downloadRequest.totalBytes) * 100).toInt()
+                                )
                             }
                             sink.flush()
                         }
@@ -238,6 +228,13 @@ class DownloadTask(
 
     fun reset() {
         downloadRequest.reset()
+    }
+
+    fun pause() {
+        downloadRequest.status = Status.PAUSED
+        dbScope.launch {
+            downloadRequestDao.update(downloadRequest)
+        }
     }
 
     interface Listener {

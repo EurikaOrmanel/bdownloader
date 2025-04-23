@@ -20,6 +20,6 @@ data class DownloadRequest(
         status = Status.UNKNOWN
     }
 
-    fun load() {
-    }
+    fun progress(): Int = ((downloadedBytes?.div(totalBytes) ?: 0) * 100).toInt()
+
 }

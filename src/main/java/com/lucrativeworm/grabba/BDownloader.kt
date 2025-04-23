@@ -10,14 +10,29 @@ import com.lucrativeworm.bdownloader.models.DownloadRequest
 class AllDownloaderManager(context: Context) {
 
     fun tasksById(ids: List<Long>): List<DownloadRequest> {
-        return downloadTaskQueue.fetchbyIds(ids)
+        return downloadTaskQueue.fetchByIds(ids)
     }
 
     private val db = Room.databaseBuilder(context, DownloadRequestDB::class.java, "downloads")
         .allowMainThreadQueries().build()
     private val downloadTaskQueue = DownloadTaskQueue(db.downloadReqDao())
 
-    suspend fun enqueue(req: DownloadTask, listener: DownloadTask.Listener) {
+    suspend fun enqueue(req: DownloadRequest, listener: DownloadTask.Listener) {
         downloadTaskQueue.addToQueue(req, listener)
+    }
+
+    fun pause(id: Long) {
+        downloadTaskQueue.pause(id)
+    }
+    fun byId(id:Long){
+        downloadTaskQueue.requestById(id)
+    }
+
+    fun cancel(id: Long) {
+        downloadTaskQueue.cancel(id)
+    }
+
+    fun cancelAll() {
+        downloadTaskQueue.cancelAll()
     }
 }
