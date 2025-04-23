@@ -45,7 +45,7 @@ android {
 }
 
 dependencies {
-    implementation(libs.bdownloader)
+    implementation(":bdownloader")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

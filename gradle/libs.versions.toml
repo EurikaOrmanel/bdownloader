@@ -1,6 +1,6 @@
 [versions]
 agp = "8.8.0"
-bdownloader = "0.0.2"
+bdownloader = "0.0.3"
 hiltAndroid = "2.48"
 hiltCompiler = "1.2.0"
 kotlin = "2.0.0"
