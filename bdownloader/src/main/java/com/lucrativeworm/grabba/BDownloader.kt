@@ -7,7 +7,7 @@ import com.lucrativeworm.bdownloader.internal.DownloadTask
 import com.lucrativeworm.bdownloader.internal.DownloadTaskQueue
 import com.lucrativeworm.bdownloader.models.DownloadRequest
 
-class AllDownloaderManager(context: Context) {
+class BDownloader(context: Context) {
 
     fun tasksById(ids: List<Long>): List<DownloadRequest> {
         return downloadTaskQueue.fetchByIds(ids)

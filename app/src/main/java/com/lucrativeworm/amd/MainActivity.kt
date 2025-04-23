@@ -32,7 +32,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.lucrativeworm.amd.ui.theme.AMDTheme
-import com.lucrativeworm.bdownloader.AllDownloaderManager
+import com.lucrativeworm.bdownloader.BDownloader
 import com.lucrativeworm.bdownloader.internal.DownloadTask
 import com.lucrativeworm.bdownloader.models.DownloadRequest
 import com.lucrativeworm.bdownloader.models.Status
@@ -61,7 +61,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val downloader = AllDownloaderManager(context)
+    val downloader = BDownloader(context)
     var id: Long? by remember { mutableStateOf(null) }
     var progress by remember { mutableFloatStateOf(0F) }
     var paused by remember { mutableStateOf(false) }
